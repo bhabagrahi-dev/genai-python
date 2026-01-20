@@ -32,8 +32,14 @@ def text_gen():
         return jsonify({"status": "error", "message": "No prompt provided"}), 400
 
     try:
+        # response = client.chat.completions.create(
+        #     model="gemma2-2b-it",
+        #     messages=[{"role": "user", "content": user_prompt}],
+        #     max_tokens=400
+        # )
+
         response = client.chat.completions.create(
-            model="gemma2-2b-it",
+            model="llama-3.1-8b-instant",
             messages=[{"role": "user", "content": user_prompt}],
             max_tokens=400
         )
