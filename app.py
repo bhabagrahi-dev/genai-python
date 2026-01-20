@@ -7,12 +7,13 @@ app = Flask(__name__)
 CORS(app)
 
 # 1. Setup Token and Client
-token = os.getenv("HF_TOKEN") 
+token = os.getenv("HF_TOKEN")
 # Explicitly use the hf-inference provider for stability
-client = InferenceClient(api_key=token)
+client = InferenceClient(api_key=token,provider="hf-inference")
 
 @app.route('/', methods=['GET'])
 def home():
+    print("HF_TOKEN Loaded:", "YES" if token else "NO")
     return jsonify({"message": "Bhabagrahi welcomes you , hit /text for more!"})
 
 # Renamed endpoint for text generation
