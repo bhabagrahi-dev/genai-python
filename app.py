@@ -22,7 +22,7 @@ def text_gen():
 
     try:
         response = client.chat.completions.create(
-            model="gemma-7b-it",
+            model="gemma2-2b-it",
             messages=[{"role": "user", "content": user_prompt}],
             max_tokens=400
         )
