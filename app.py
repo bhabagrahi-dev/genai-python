@@ -26,6 +26,7 @@ def text_gen():
     
     try:
         # Using Phi-3 for guaranteed free-tier stability
+        print("HF_TOKEN Loaded:", "YES" if token else "NO")
         response = client.chat.completions.create(
             model="microsoft/Phi-3-mini-4k-instruct", 
             messages=[{"role": "user", "content": user_prompt}],
