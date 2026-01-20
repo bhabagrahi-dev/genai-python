@@ -12,6 +12,17 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 def home():
     return jsonify({"message": "Bhabagrahi welcomes you , hit /text for more!"})
 
+@app.route("/models", methods=["GET"])
+def list_models():
+    try:
+        models = client.models.list()
+        return jsonify({
+            "status": "success",
+            "models": [m.id for m in models.data]
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route("/text", methods=["POST"])
 def text_gen():
     data = request.get_json(silent=True) or {}
