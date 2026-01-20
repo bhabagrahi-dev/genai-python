@@ -17,7 +17,28 @@ print("HF_TOKEN Loaded: YES")
 def home():
     return jsonify({"message": "Bhabagrahi welcomes you , hit /text for more!"})
 
-@app.route("/text", methods=["POST"])
+# @app.route("/text", methods=["POST"])
+# def text_gen():
+#     data = request.get_json(silent=True) or {}
+#     user_prompt = data.get("prompt", "").strip()
+
+#     if not user_prompt:
+#         return jsonify({"status": "error", "message": "No prompt provided"}), 400
+
+#     try:
+#         response = client.chat.completions.create(
+#             model="google/gemma-2-2b-it",
+#             messages=[{"role": "user", "content": user_prompt}],
+#             max_tokens=500
+#         )
+
+#         answer = response.choices[0].message.content
+#         return jsonify({"status": "success", "result": answer})
+
+#     except Exception as e:
+#         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/text', methods=['POST'])
 def text_gen():
     data = request.get_json(silent=True) or {}
     user_prompt = data.get("prompt", "").strip()
@@ -26,17 +47,17 @@ def text_gen():
         return jsonify({"status": "error", "message": "No prompt provided"}), 400
 
     try:
-        response = client.chat.completions.create(
+        output = client.text_generation(
             model="google/gemma-2-2b-it",
-            messages=[{"role": "user", "content": user_prompt}],
-            max_tokens=500
+            prompt=user_prompt,
+            max_new_tokens=300
         )
 
-        answer = response.choices[0].message.content
-        return jsonify({"status": "success", "result": answer})
+        return jsonify({"status": "success", "result": output})
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @app.route("/image", methods=["POST"])
 def image_gen():
