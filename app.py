@@ -9,7 +9,7 @@ CORS(app)
 # 1. Setup Token and Client
 token = os.getenv("HF_TOKEN") 
 # Explicitly use the hf-inference provider for stability
-client = InferenceClient(api_key=token, provider="hf-inference")
+client = InferenceClient(api_key=token)
 
 @app.route('/', methods=['GET'])
 def home():
@@ -28,7 +28,7 @@ def text_gen():
         # Using Phi-3 for guaranteed free-tier stability
         print("HF_TOKEN Loaded:", "YES" if token else "NO")
         response = client.chat.completions.create(
-            model="microsoft/Phi-3-mini-4k-instruct", 
+            model="google/gemma-2-2b-it", 
             messages=[{"role": "user", "content": user_prompt}],
             max_tokens=500
         )
