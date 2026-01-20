@@ -6,30 +6,28 @@ from huggingface_hub import InferenceClient
 app = Flask(__name__)
 CORS(app)
 
-# 1. Pull the token from your Secrets
+# 1. Setup Token and Client
 token = os.getenv("HF_TOKEN") 
-
-# 2. Use the standard InferenceClient
-# We do NOT pass a model URL here anymore to avoid the 410 error
-client = InferenceClient(api_key=token)
+# Explicitly use the hf-inference provider for stability
+client = InferenceClient(api_key=token, provider="hf-inference")
 
 @app.route('/', methods=['GET'])
-def greet_json():
-    return {"message": "Bhabagrahi Welcomes you! API is Live."}
+def home():
+    return jsonify({"message": "Bhabagrahi welcomes you , hit /text for more!"})
 
-@app.route('/generate', methods=['POST'])
-def generate():
+# Renamed endpoint for text generation
+@app.route('/text', methods=['POST'])
+def text_gen():
     data = request.json
     user_prompt = data.get("prompt", "")
     
     if not user_prompt:
         return jsonify({"status": "error", "message": "No prompt provided"}), 400
-
+    
     try:
-        # 3. THE MAGIC FIX: Append ':hf-inference' to the model name
-        # This forces the free Hugging Face provider and skips paid ones like Nebius
+        # Using Phi-3 for guaranteed free-tier stability
         response = client.chat.completions.create(
-            model="google/gemma-2-2b-it:hf-inference", 
+            model="microsoft/Phi-3-mini-4k-instruct", 
             messages=[{"role": "user", "content": user_prompt}],
             max_tokens=500
         )
@@ -38,8 +36,18 @@ def generate():
         return jsonify({"status": "success", "result": answer})
 
     except Exception as e:
-        print(f"Error: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# New placeholder endpoint for image generation
+@app.route('/image', methods=['POST'])
+def image_gen():
+    return jsonify({
+        "status": "success", 
+        "message": "Coming Soon",
+        "note": "This endpoint will eventually generate AI images."
+    })
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=7860)
+    # For GCP Cloud Run, we use the PORT env var; for local/HF, we default to 7860
+    port = int(os.environ.get("PORT", 7860))
+    app.run(host='0.0.0.0', port=port)
