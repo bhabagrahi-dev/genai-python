@@ -52,6 +52,44 @@ def text_gen():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+@app.route("/text-stream", methods=["POST"])
+def text_gen_stream():
+    data = request.get_json(silent=True) or {}
+    user_prompt = data.get("prompt", "").strip()
+
+    if not user_prompt:
+        return jsonify({"status": "error", "message": "No prompt provided"}), 400
+
+    def generate():
+        try:
+            stream = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": user_prompt}],
+                max_tokens=400,
+                stream=True
+            )
+
+            for chunk in stream:
+                # Groq streaming gives delta content
+                token = chunk.choices[0].delta.content or ""
+                if token:
+                    yield f"data: {json.dumps({'token': token})}\n\n"
+
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"  # helps on nginx to not buffer
+        }
+    )
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
     app.run(host="0.0.0.0", port=port)
