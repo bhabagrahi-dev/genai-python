@@ -67,7 +67,7 @@ def text_gen_stream():
             stream = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": user_prompt}],
-                max_tokens=400,
+                max_tokens=1024,
                 stream=True
             )
 
