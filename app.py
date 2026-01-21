@@ -76,6 +76,9 @@ def text_gen_stream():
                 token = chunk.choices[0].delta.content or ""
                 if token:
                     yield f"data: {json.dumps({'token': token})}\n\n"
+                else:
+                    # ✅ keep-alive ping to prevent Render/proxy timeout/buffering
+                    yield ": ping\n\n"
 
             yield f"data: {json.dumps({'done': True})}\n\n"
 
