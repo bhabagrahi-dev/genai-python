@@ -17,10 +17,17 @@ hf_client = InferenceClient(
 def home():
     return jsonify({"message": "Bhabagrahi welcomes you , hit /text for more!"})
 
-@app.route("/models", methods=["GET"])
+@app.route("/models", methods=["POST"])
 def list_models():
+    data = request.get_json(silent=True) or {}
+    provider = data.get("provider", "groq")
     try:
-        models = client.models.list()
+        # models = client.models.list()
+        if provider == "groq":
+            models = groq_client.models.list()
+        else:
+            return jsonify({"error": "only grok available for now , for hf use url : https://huggingface.co/api/models"}), 400
+
         return jsonify({
             "status": "success",
             "models": [m.id for m in models.data]
