@@ -17,10 +17,9 @@ hf_client = InferenceClient(
 def home():
     return jsonify({"message": "Bhabagrahi welcomes you , hit /text for more!"})
 
-@app.route("/models", methods=["POST"])
+@app.route("/models", methods=["GET"])
 def list_models():
-    data = request.get_json(silent=True) or {}
-    provider = data.get("provider", "groq")
+    provider = request.args.get('provider', 'groq')
     try:
         # models = client.models.list()
         if provider == "groq":
