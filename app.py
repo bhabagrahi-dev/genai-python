@@ -67,7 +67,7 @@ def text_gen():
 
         elif provider == "hf":
             response = hf_client.chat.completions.create(
-                model=model or "meta-llama/Llama-3.1-8B-Instruct",
+                model=model or "openai/gpt-oss-120b",
                 messages=[{"role": "user", "content": user_prompt}],
                 max_tokens=1024
             )
