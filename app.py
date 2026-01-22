@@ -40,6 +40,7 @@ def text_gen():
     user_prompt = data.get("prompt", "").strip()
     provider = data.get("provider", "groq")
     model = data.get("model","llama-3.1-8b-instant").strip()
+    model = "llama-3.1-8b-instant" if provider == "groq" else "openai/gpt-oss-120b"
 
     if not user_prompt:
         return jsonify({"status": "error", "message": "No prompt provided"}), 400
@@ -90,7 +91,7 @@ def text_gen_stream():
     data = request.get_json(silent=True) or {}
     user_prompt = data.get("prompt", "").strip()
     provider = data.get("provider", "groq")
-    default_model = "llama-3.1-8b-instant" if provider == "groq" else "meta-llama/Llama-3.1-8B-Instruct"
+    default_model = "llama-3.1-8b-instant" if provider == "groq" else "openai/gpt-oss-120b"
     model_name = data.get("model", default_model).strip()
 
     if not user_prompt:
