@@ -3,11 +3,15 @@ import json
 from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
 from groq import Groq
+from huggingface_hub import InferenceClient
 
 app = Flask(__name__)
 CORS(app)
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+hf_client = InferenceClient(
+    api_key=os.getenv("HF_TOKEN")
+)
 
 @app.route("/", methods=["GET"])
 def home():
@@ -28,6 +32,8 @@ def list_models():
 def text_gen():
     data = request.get_json(silent=True) or {}
     user_prompt = data.get("prompt", "").strip()
+    provider = data.get("provider", "groq")
+    model = data.get("model","llama-3.1-8b-instant").strip()
 
     if not user_prompt:
         return jsonify({"status": "error", "message": "No prompt provided"}), 400
@@ -39,15 +45,34 @@ def text_gen():
         #     max_tokens=400
         # )
 
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": user_prompt}],
-            max_tokens=1024
-        )
+        # response = client.chat.completions.create(
+        #     model=model,
+        #     messages=[{"role": "user", "content": user_prompt}],
+        #     max_tokens=1024
+        # )
+
+        if provider == "groq":
+            response = groq_client.chat.completions.create(
+                model=model or "llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": user_prompt}],
+                max_tokens=1024
+            )
+            output = response.choices[0].message.content
+
+        elif provider == "hf":
+            response = hf_client.chat.completions.create(
+                model=model or "meta-llama/Llama-3.1-8B-Instruct",
+                messages=[{"role": "user", "content": user_prompt}],
+                max_tokens=1024
+            )
+            output = response.choices[0].message.content
+        
+        else:
+            return jsonify({"error": "Invalid provider"}), 400
 
         return jsonify({
             "status": "success",
-            "result": response.choices[0].message.content
+            "result": output
         })
 
     except Exception as e:
@@ -58,18 +83,38 @@ def text_gen():
 def text_gen_stream():
     data = request.get_json(silent=True) or {}
     user_prompt = data.get("prompt", "").strip()
+    provider = data.get("provider", "groq")
+    default_model = "llama-3.1-8b-instant" if provider == "groq" else "meta-llama/Llama-3.1-8B-Instruct"
+    model_name = data.get("model", default_model).strip()
 
     if not user_prompt:
         return jsonify({"status": "error", "message": "No prompt provided"}), 400
 
     def generate():
         try:
-            stream = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": user_prompt}],
-                max_tokens=1024,
-                stream=True
-            )
+            if provider == "groq":
+                stream = groq_client.chat.completions.create(
+                    model=model_name,
+                    messages=[{"role": "user", "content": user_prompt}],
+                    max_tokens=1024,
+                    stream=True
+                )
+            elif provider == "hf":
+                stream = hf_client.chat.completions.create(
+                    model=model_name,
+                    messages=[{"role": "user", "content": user_prompt}],
+                    max_tokens=1024,
+                    stream=True
+                )
+            else:
+                yield f"data: {json.dumps({'error': 'Invalid provider'})}\n\n"
+                return
+            # stream = client.chat.completions.create(
+            #     model=model,
+            #     messages=[{"role": "user", "content": user_prompt}],
+            #     max_tokens=1024,
+            #     stream=True
+            # )
 
             for chunk in stream:
                 # Groq streaming gives delta content
